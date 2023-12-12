@@ -59,7 +59,7 @@ struct position{
     float z;
 };
 
-std::array<position, 7> marker_position;
+std::array<position, 8> marker_position;
 
 // NatNet Callbacks
 void NATNET_CALLCONV ServerDiscoveredCallback(const sNatNetDiscoveredServer* pDiscoveredServer, void* pUserContext);
@@ -133,7 +133,7 @@ void printfBits(uint64_t val, int nBits)
 
 //New function and variable for ROS2
 void publishData(rclcpp::Publisher<optitrack_msgs::msg::OptitrackData>::SharedPtr publisher, rclcpp::Node::SharedPtr node){
-    auto wing_message = std::make_shared<optitrack_msgs::msg::OptitrackData>();
+    auto data_optitrack = std::make_shared<optitrack_msgs::msg::OptitrackData>();
     float counter = 0;
 
     // auto start_time = node->now();
@@ -141,39 +141,42 @@ void publishData(rclcpp::Publisher<optitrack_msgs::msg::OptitrackData>::SharedPt
     while (1)
     {
         if(rclcpp::ok()){
-            wing_message->header.stamp = node->now();
-            wing_message->header.frame_id = "optitrack_marker";
+            data_optitrack->header.stamp = node->now();
+            data_optitrack->header.frame_id = "optitrack_marker";
 
-            wing_message->marker1.x = marker_position[0].x;
-            wing_message->marker1.y = marker_position[0].y;
-            wing_message->marker1.z = marker_position[0].z;
+            data_optitrack->marker1.x = marker_position[0].x;
+            data_optitrack->marker1.y = marker_position[0].y;
+            data_optitrack->marker1.z = marker_position[0].z;
 
-            wing_message->marker2.x = marker_position[1].x;
-            wing_message->marker2.y = marker_position[1].y;
-            wing_message->marker2.z = marker_position[1].z;
+            data_optitrack->marker2.x = marker_position[1].x;
+            data_optitrack->marker2.y = marker_position[1].y;
+            data_optitrack->marker2.z = marker_position[1].z;
             
             
-            wing_message->marker3.x = marker_position[2].x;
-            wing_message->marker3.y = marker_position[2].y;
-            wing_message->marker3.z = marker_position[2].z;
+            data_optitrack->marker3.x = marker_position[2].x;
+            data_optitrack->marker3.y = marker_position[2].y;
+            data_optitrack->marker3.z = marker_position[2].z;
             
-            wing_message->marker4.x = marker_position[3].x;
-            wing_message->marker4.y = marker_position[3].y;
-            wing_message->marker4.z = marker_position[3].z;
+            data_optitrack->marker4.x = marker_position[3].x;
+            data_optitrack->marker4.y = marker_position[3].y;
+            data_optitrack->marker4.z = marker_position[3].z;
             
-            wing_message->marker5.x = marker_position[4].x;
-            wing_message->marker5.y = marker_position[4].y;
-            wing_message->marker5.z = marker_position[4].z;
+            data_optitrack->marker5.x = marker_position[4].x;
+            data_optitrack->marker5.y = marker_position[4].y;
+            data_optitrack->marker5.z = marker_position[4].z;
             
-            wing_message->marker6.x = marker_position[5].x;
-            wing_message->marker6.y = marker_position[5].y;
-            wing_message->marker6.z = marker_position[5].z;
+            data_optitrack->marker6.x = marker_position[5].x;
+            data_optitrack->marker6.y = marker_position[5].y;
+            data_optitrack->marker6.z = marker_position[5].z;
             
-            wing_message->marker7.x = marker_position[6].x;
-            wing_message->marker7.y = marker_position[6].y;
-            wing_message->marker7.z = marker_position[6].z;
-            
-            publisher->publish(*wing_message);
+            data_optitrack->marker7.x = marker_position[6].x;
+            data_optitrack->marker7.y = marker_position[6].y;
+            data_optitrack->marker7.z = marker_position[6].z;
+
+            data_optitrack->marker8.x = marker_position[7].x;
+            data_optitrack->marker8.y = marker_position[7].y;
+            data_optitrack->marker8.z = marker_position[7].z;            
+            publisher->publish(*data_optitrack);
 
             // rclcpp::spin(node);
         }
