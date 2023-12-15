@@ -49,9 +49,9 @@ int _kbhit();
 #endif
 
 // New header for ROS2
-#include "optitrack_msgs/msg/optitrack_data.hpp"
+// #include "optitrack_msgs/msg/optitrack_data.hpp"
 #include "rclcpp/rclcpp.hpp"
-
+#include "geometry_msgs/msg/polygon_stamped.hpp"
 
 struct position{
     float x;
@@ -59,7 +59,17 @@ struct position{
     float z;
 };
 
-std::array<position, 8> marker_position;
+std::vector<geometry_msgs::msg::Point32> marker_position(8);
+
+geometry_msgs::msg::Point32 create_point(position marker_data){
+    geometry_msgs::msg::Point32 point;
+
+    point.x = marker_data.x;
+    point.y = marker_data.y;
+    point.z = marker_data.z;
+
+    return point;
+}
 
 // NatNet Callbacks
 void NATNET_CALLCONV ServerDiscoveredCallback(const sNatNetDiscoveredServer* pDiscoveredServer, void* pUserContext);
@@ -132,56 +142,37 @@ void printfBits(uint64_t val, int nBits)
 }
 
 //New function and variable for ROS2
-void publishData(rclcpp::Publisher<optitrack_msgs::msg::OptitrackData>::SharedPtr publisher, rclcpp::Node::SharedPtr node){
-    auto data_optitrack = std::make_shared<optitrack_msgs::msg::OptitrackData>();
+void publishData(rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr publisher, rclcpp::Node::SharedPtr node){
+    auto data_optitrack = std::make_shared<geometry_msgs::msg::PolygonStamped>();
     float counter = 0;
 
     // auto start_time = node->now();
 
-    while (1)
+    while (1)   
     {
         if(rclcpp::ok()){
+            // data_optitrack->polygon.set__points(8);
+
             data_optitrack->header.stamp = node->now();
             data_optitrack->header.frame_id = "optitrack_marker";
 
-            data_optitrack->marker1.x = marker_position[0].x;
-            data_optitrack->marker1.y = marker_position[0].y;
-            data_optitrack->marker1.z = marker_position[0].z;
+            data_optitrack->polygon.points.reserve(8);
 
-            data_optitrack->marker2.x = marker_position[1].x;
-            data_optitrack->marker2.y = marker_position[1].y;
-            data_optitrack->marker2.z = marker_position[1].z;
-            
-            
-            data_optitrack->marker3.x = marker_position[2].x;
-            data_optitrack->marker3.y = marker_position[2].y;
-            data_optitrack->marker3.z = marker_position[2].z;
-            
-            data_optitrack->marker4.x = marker_position[3].x;
-            data_optitrack->marker4.y = marker_position[3].y;
-            data_optitrack->marker4.z = marker_position[3].z;
-            
-            data_optitrack->marker5.x = marker_position[4].x;
-            data_optitrack->marker5.y = marker_position[4].y;
-            data_optitrack->marker5.z = marker_position[4].z;
-            
-            data_optitrack->marker6.x = marker_position[5].x;
-            data_optitrack->marker6.y = marker_position[5].y;
-            data_optitrack->marker6.z = marker_position[5].z;
-            
-            data_optitrack->marker7.x = marker_position[6].x;
-            data_optitrack->marker7.y = marker_position[6].y;
-            data_optitrack->marker7.z = marker_position[6].z;
+            for(int i=0; i < marker_position.size(); i++) {
+                RCLCPP_INFO(node->get_logger(), "Data Marker : %f, %f, %f", marker_position[i].x, marker_position[i].y, marker_position[i].z);
+            }
+            data_optitrack->polygon.points.assign(marker_position.begin(), marker_position.end());
 
-            data_optitrack->marker8.x = marker_position[7].x;
-            data_optitrack->marker8.y = marker_position[7].y;
-            data_optitrack->marker8.z = marker_position[7].z;            
+
             publisher->publish(*data_optitrack);
+            RCLCPP_INFO(node->get_logger(), "size: %d", marker_position.size());
+            // marker_position.clear();
+            // data_optitrack->polygon.points.clear();
 
             // rclcpp::spin(node);
         }
         
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
     }
     
@@ -199,7 +190,7 @@ int main( int argc, char* argv[] )
     //new function for ROS2
     rclcpp::init(argc, argv);
     auto node = rclcpp::Node::make_shared("optitrack");
-    auto optitrack_pub = node->create_publisher<optitrack_msgs::msg::OptitrackData>("optitrack_data", 1);
+    auto optitrack_pub = node->create_publisher<geometry_msgs::msg::PolygonStamped>("optitrack_data", 100);
 
     std::thread rosThread(publishData, optitrack_pub, node);
     std::cout << "thread has been ran" << std::endl;
@@ -384,7 +375,7 @@ int main( int argc, char* argv[] )
             OutputFrameQueueToConsole();
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     rosThread.join();
@@ -1123,10 +1114,12 @@ void OutputFrameQueueToConsole()
         bool bUnlabeled;    // marker is 'unlabeled', but has a point cloud ID that matches Motive PointCloud ID (In Motive 3D View)
         bool bActiveMarker; // marker is an actively labeled LED marker
         
-        position _marker_position;
+        geometry_msgs::msg::Point32 _marker_position;
 
         printf("------------------------\n");
         printf("Markers [Count=%d]\n", data->nLabeledMarkers);
+
+        // marker_position.clear();
         for (i = 0; i < data->nLabeledMarkers; i++)
         {
             bOccluded = ((data->LabeledMarkers[i].params & 0x01) != 0);
@@ -1134,7 +1127,7 @@ void OutputFrameQueueToConsole()
             bModelSolved = ((data->LabeledMarkers[i].params & 0x04) != 0);
             bHasModel = ((data->LabeledMarkers[i].params & 0x08) != 0);
             bUnlabeled = ((data->LabeledMarkers[i].params & 0x10) != 0);
-            bActiveMarker = ((data->LabeledMarkers[i].params & 0x20) != 0);
+            bActiveMarker = ((data->LabeledMarkers[i].params & 0x20) != 0); 
 
             sMarker marker = data->LabeledMarkers[i];
 
@@ -1157,12 +1150,13 @@ void OutputFrameQueueToConsole()
                 strcpy(szMarkerType, "Unlabeled");
             else
                 strcpy(szMarkerType, "Labeled");
+            
+            if(data->nLabeledMarkers == 8){
+                marker_position[i].x = marker.x;
+                marker_position[i].y = marker.y;
+                marker_position[i].z = marker.z;
+            }
 
-            _marker_position.x = marker.x;
-            _marker_position.y = marker.y;
-            _marker_position.z = marker.z;
-
-            marker_position[i] = _marker_position;
 
             printf("%s Marker [ModelID=%d, MarkerID=%d] [size=%3.2f] [pos=%3.2f,%3.2f,%3.2f] [residual(mm)=%.4f]\n",
                 szMarkerType, modelID, markerID, marker.size, marker.x, marker.y, marker.z, marker.residual*1000.0f);
@@ -1245,7 +1239,7 @@ void NATNET_CALLCONV DataHandler(sFrameOfMocapData* data, void* pUserData)
     // so let's just safely add this frame to our shared  'network' frame queue and return.
     
     // Note : The 'data' ptr passed in is managed by NatNet and cannot be used outside this function.
-    // Since we are keeping the data, we need to make a copy of it.
+    // Since we are keeping the data, we RigidBodiesneed to make a copy of it.
     shared_ptr<sFrameOfMocapData> pDataCopy = make_shared<sFrameOfMocapData>();
     NatNet_CopyFrame(data, pDataCopy.get());
 

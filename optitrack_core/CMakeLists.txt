@@ -16,7 +16,8 @@ set(NatNetLib ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/NatNet_SDK_4.1_ubuntu/s
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(optitrack_msgs REQUIRED)
+# find_package(optitrack_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 include_directories(
   include
@@ -33,7 +34,7 @@ install(TARGETS
   ${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-ament_target_dependencies(${PROJECT_NAME} rclcpp optitrack_msgs)
+ament_target_dependencies(${PROJECT_NAME} rclcpp geometry_msgs)
 
 
 # target_include_directories(${PROJECT_NAME} PUBLIC
