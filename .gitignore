@@ -32,3 +32,5 @@
 *.app
 
 .vscode
+
+NatNet_SDK_*

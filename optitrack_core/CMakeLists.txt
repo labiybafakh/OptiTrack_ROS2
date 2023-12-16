@@ -12,7 +12,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(NatNetLib ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/NatNet_SDK_4.1_ubuntu/samples/SampleClient)
+set(NatNetLib ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/NatNet_SDK_4.1_ubuntu)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -45,7 +45,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C
 
 
 target_link_libraries(${PROJECT_NAME}
-  libNatNet.so
+  ${NatNetLib}/lib/libNatNet.so
 )
 
 
