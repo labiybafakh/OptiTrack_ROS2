@@ -49,9 +49,8 @@ int _kbhit();
 #endif
 
 // New header for ROS2
-// #include "optitrack_msgs/msg/optitrack_data.hpp"
+#include "optitrack_msgs/msg/optitrack_data.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "geometry_msgs/msg/polygon_stamped.hpp"
 
 struct position{
     float x;
@@ -59,17 +58,8 @@ struct position{
     float z;
 };
 
-std::vector<geometry_msgs::msg::Point32> marker_position(8);
+std::vector<position> marker_position(8);
 
-geometry_msgs::msg::Point32 create_point(position marker_data){
-    geometry_msgs::msg::Point32 point;
-
-    point.x = marker_data.x;
-    point.y = marker_data.y;
-    point.z = marker_data.z;
-
-    return point;
-}
 
 // NatNet Callbacks
 void NATNET_CALLCONV ServerDiscoveredCallback(const sNatNetDiscoveredServer* pDiscoveredServer, void* pUserContext);
@@ -142,8 +132,8 @@ void printfBits(uint64_t val, int nBits)
 }
 
 //New function and variable for ROS2
-void publishData(rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr publisher, rclcpp::Node::SharedPtr node){
-    auto data_optitrack = std::make_shared<geometry_msgs::msg::PolygonStamped>();
+void publishData(rclcpp::Publisher<optitrack_msgs::msg::OptitrackData>::SharedPtr publisher, rclcpp::Node::SharedPtr node){
+    auto data_optitrack = std::make_shared<optitrack_msgs::msg::OptitrackData>();
     float counter = 0;
 
     // auto start_time = node->now();
@@ -156,23 +146,48 @@ void publishData(rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPt
             data_optitrack->header.stamp = node->now();
             data_optitrack->header.frame_id = "optitrack_marker";
 
-            data_optitrack->polygon.points.reserve(8);
+            data_optitrack->marker1.x = marker_position[0].x;
+            data_optitrack->marker1.y = marker_position[0].y;
+            data_optitrack->marker1.z = marker_position[0].z;
 
-            for(int i=0; i < marker_position.size(); i++) {
-                RCLCPP_INFO(node->get_logger(), "Data Marker : %f, %f, %f", marker_position[i].x, marker_position[i].y, marker_position[i].z);
-            }
-            data_optitrack->polygon.points.assign(marker_position.begin(), marker_position.end());
+            data_optitrack->marker2.x = marker_position[1].x;
+            data_optitrack->marker2.y = marker_position[1].y;
+            data_optitrack->marker2.z = marker_position[1].z;
 
+            data_optitrack->marker3.x = marker_position[2].x;
+            data_optitrack->marker3.y = marker_position[2].y;
+            data_optitrack->marker3.z = marker_position[2].z;
+
+            data_optitrack->marker4.x = marker_position[3].x;
+            data_optitrack->marker4.y = marker_position[3].y;
+            data_optitrack->marker4.z = marker_position[3].z;
+                        
+            data_optitrack->marker5.x = marker_position[4].x;
+            data_optitrack->marker5.y = marker_position[4].y;
+            data_optitrack->marker5.z = marker_position[4].z;
+            
+            data_optitrack->marker6.x = marker_position[5].x;
+            data_optitrack->marker6.y = marker_position[5].y;
+            data_optitrack->marker6.z = marker_position[5].z;
+            
+            data_optitrack->marker7.x = marker_position[6].x;
+            data_optitrack->marker7.y = marker_position[6].y;
+            data_optitrack->marker7.z = marker_position[6].z;
+
+            data_optitrack->marker8.x = marker_position[7].x;
+            data_optitrack->marker8.y = marker_position[7].y;
+            data_optitrack->marker8.z = marker_position[7].z;
 
             publisher->publish(*data_optitrack);
-            RCLCPP_INFO(node->get_logger(), "size: %d", marker_position.size());
+            // RCLCPP_INFO(node->get_logger(), "size: %d", marker_position.size());
             // marker_position.clear();
+            
             // data_optitrack->polygon.points.clear();
 
             // rclcpp::spin(node);
         }
         
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     }
     
@@ -190,7 +205,7 @@ int main( int argc, char* argv[] )
     //new function for ROS2
     rclcpp::init(argc, argv);
     auto node = rclcpp::Node::make_shared("optitrack");
-    auto optitrack_pub = node->create_publisher<geometry_msgs::msg::PolygonStamped>("optitrack_data", 100);
+    auto optitrack_pub = node->create_publisher<optitrack_msgs::msg::OptitrackData>("optitrack_data", 100);
 
     std::thread rosThread(publishData, optitrack_pub, node);
     std::cout << "thread has been ran" << std::endl;
@@ -1114,8 +1129,6 @@ void OutputFrameQueueToConsole()
         bool bUnlabeled;    // marker is 'unlabeled', but has a point cloud ID that matches Motive PointCloud ID (In Motive 3D View)
         bool bActiveMarker; // marker is an actively labeled LED marker
         
-        geometry_msgs::msg::Point32 _marker_position;
-
         printf("------------------------\n");
         printf("Markers [Count=%d]\n", data->nLabeledMarkers);
 
